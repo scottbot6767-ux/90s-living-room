@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>90s Living Room — Nostalgia Machine</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #1a1a1a;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'VT323', monospace;
+        }
+
+        .room-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .room-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+        }
+
+        /* Interactive Hotspots */
+        .hotspot {
+            position: absolute;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+            border-radius: 8px;
+        }
+
+        .hotspot:hover {
+            border-color: rgba(255, 255, 0, 0.6);
+            box-shadow: 0 0 20px rgba(255, 255, 0, 0.4), inset 0 0 20px rgba(255, 255, 0, 0.1);
+        }
+
+        .hotspot.active {
+            border-color: rgba(0, 255, 0, 0.8);
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.5);
+        }
+
+        /* TV Hotspot */
+        .hotspot-tv {
+            left: 33%;
+            top: 25%;
+            width: 18%;
+            height: 35%;
+        }
+
+        /* Computer Hotspot */
+        .hotspot-computer {
+            left: 59%;
+            top: 22%;
+            width: 16%;
+            height: 40%;
+        }
+
+        /* Radio Hotspot */
+        .hotspot-radio {
+            left: 15%;
+            top: 33%;
+            width: 10%;
+            height: 12%;
+        }
+
+        /* Phone Hotspot */
+        .hotspot-phone {
+            left: 86%;
+            top: 25%;
+            width: 5%;
+            height: 18%;
+        }
+
+        /* Screen Overlays */
+        .screen-overlay {
+            position: absolute;
+            pointer-events: none;
+            overflow: hidden;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .screen-overlay.visible {
+            opacity: 1;
+        }
+
+        /* TV Screen */
+        .tv-screen {
+            left: 34.5%;
+            top: 29%;
+            width: 15%;
+            height: 24%;
+            border-radius: 8px;
+        }
+
+        .tv-screen iframe {
+            width: 140%;
+            height: 140%;
+            margin-left: -20%;
+            margin-top: -15%;
+            border: none;
+        }
+
+        /* CRT Scanline Effect */
+        .crt-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background: repeating-linear-gradient(
+                to bottom,
+                transparent 0px,
+                transparent 2px,
+                rgba(0, 0, 0, 0.2) 2px,
+                rgba(0, 0, 0, 0.2) 4px
+            );
+            z-index: 10;
+        }
+
+        .crt-overlay::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at center, transparent 50%, rgba(0, 0, 0, 0.3) 100%);
+        }
+
+        /* Computer Screen */
+        .computer-screen {
+            left: 60%;
+            top: 25%;
+            width: 10%;
+            height: 15%;
+            border-radius: 4px;
+        }
+
+        .computer-screen iframe {
+            width: 140%;
+            height: 140%;
+            margin-left: -20%;
+            margin-top: -15%;
+            border: none;
+        }
+
+        /* Modal/Panel for controls */
+        .control-panel {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            border: 3px solid #00ff00;
+            border-radius: 10px;
+            padding: 15px 25px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            z-index: 100;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.3);
+        }
+
+        .control-panel.hidden {
+            display: none;
+        }
+
+        .panel-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .panel-device {
+            font-size: 14px;
+            color: #00ff00;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .panel-title {
+            font-size: 24px;
+            color: #fff;
+        }
+
+        .panel-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .panel-btn {
+            background: #222;
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            padding: 10px 20px;
+            font-family: 'VT323', monospace;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .panel-btn:hover {
+            background: #00ff00;
+            color: #000;
+        }
+
+        .panel-btn.mute-btn {
+            min-width: 100px;
+        }
+
+        .panel-close {
+            background: transparent;
+            border: none;
+            color: #ff4444;
+            font-size: 28px;
+            cursor: pointer;
+            padding: 0 10px;
+            line-height: 1;
+        }
+
+        .panel-close:hover {
+            color: #ff0000;
+        }
+
+        /* Instructions */
+        .instructions {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #ffff00;
+            color: #ffff00;
+            padding: 10px 25px;
+            font-size: 18px;
+            z-index: 100;
+            text-align: center;
+            border-radius: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .instructions.hidden {
+            display: none;
+        }
+
+        /* Device labels on hover */
+        .hotspot::after {
+            content: attr(data-label);
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: #00ff00;
+            padding: 5px 12px;
+            font-size: 16px;
+            white-space: nowrap;
+            border-radius: 4px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+        }
+
+        .hotspot:hover::after {
+            opacity: 1;
+        }
+
+        /* Audio visualizer for radio */
+        .audio-visualizer {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 4px;
+            align-items: flex-end;
+            height: 40px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .audio-visualizer.visible {
+            opacity: 1;
+        }
+
+        .visualizer-bar {
+            width: 8px;
+            background: #00ff00;
+            animation: visualize 0.5s infinite ease-in-out alternate;
+        }
+
+        @keyframes visualize {
+            from { height: 10px; }
+            to { height: 40px; }
+        }
+
+        .visualizer-bar:nth-child(1) { animation-delay: 0s; }
+        .visualizer-bar:nth-child(2) { animation-delay: 0.1s; }
+        .visualizer-bar:nth-child(3) { animation-delay: 0.2s; }
+        .visualizer-bar:nth-child(4) { animation-delay: 0.15s; }
+        .visualizer-bar:nth-child(5) { animation-delay: 0.05s; }
+        .visualizer-bar:nth-child(6) { animation-delay: 0.25s; }
+        .visualizer-bar:nth-child(7) { animation-delay: 0.1s; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .control-panel {
+                flex-direction: column;
+                padding: 15px;
+                gap: 10px;
+                width: 90%;
+            }
+
+            .panel-controls {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .instructions {
+                font-size: 14px;
+                padding: 8px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="room-container">
+        <img src="https://i.imgur.com/t0lxkct.jpeg" alt="90s Living Room" class="room-image">
+
+        <!-- Interactive Hotspots -->
+        <div class="hotspot hotspot-tv" data-label="📺 TV" onclick="activateDevice('tv')"></div>
+        <div class="hotspot hotspot-computer" data-label="💻 Computer" onclick="activateDevice('computer')"></div>
+        <div class="hotspot hotspot-radio" data-label="📻 Radio" onclick="activateDevice('radio')"></div>
+        <div class="hotspot hotspot-phone" data-label="📞 Phone" onclick="activateDevice('phone')"></div>
+
+        <!-- TV Screen Overlay -->
+        <div class="screen-overlay tv-screen" id="tv-screen">
+            <div id="tv-player"></div>
+            <div class="crt-overlay"></div>
+        </div>
+
+        <!-- Computer Screen Overlay -->
+        <div class="screen-overlay computer-screen" id="computer-screen">
+            <div id="computer-player"></div>
+            <div class="crt-overlay"></div>
+        </div>
+    </div>
+
+    <!-- Instructions -->
+    <div class="instructions" id="instructions">
+        Click on the TV, Computer, Radio, or Phone to interact!
+    </div>
+
+    <!-- Control Panel -->
+    <div class="control-panel hidden" id="control-panel">
+        <div class="panel-info">
+            <span class="panel-device" id="panel-device">TV</span>
+            <span class="panel-title" id="panel-title">Channel 1</span>
+        </div>
+        <div class="panel-controls">
+            <button class="panel-btn" onclick="prevChannel()">◀ PREV</button>
+            <button class="panel-btn mute-btn" id="mute-btn" onclick="toggleMute()">UNMUTE</button>
+            <button class="panel-btn" onclick="nextChannel()">NEXT ▶</button>
+        </div>
+        <button class="panel-close" onclick="closeDevice()">✕</button>
+    </div>
+
+    <!-- Audio Visualizer -->
+    <div class="audio-visualizer" id="audio-visualizer">
+        <div class="visualizer-bar"></div>
+        <div class="visualizer-bar"></div>
+        <div class="visualizer-bar"></div>
+        <div class="visualizer-bar"></div>
+        <div class="visualizer-bar"></div>
+        <div class="visualizer-bar"></div>
+        <div class="visualizer-bar"></div>
+    </div>
+
+    <!-- Hidden audio elements -->
+    <audio id="phone-audio" preload="auto"></audio>
+    <audio id="radio-audio" preload="auto"></audio>
+
+    <script>
+        // Content libraries
+        const content = {
+            tv: [
+                { id: "TijcoS8qHIE", title: "House Hippo PSA", start: 0 },
+                { id: "KmtzQCSh6xk", title: "Saved by the Bell", start: 60 },
+                { id: "i1NKoMNy5bY", title: "Fresh Prince of Bel-Air", start: 0 },
+                { id: "NNUdPa3yfXs", title: "90s Commercials Compilation", start: 0 },
+                { id: "LatorN4P9aA", title: "Are You Afraid of the Dark?", start: 120 },
+                { id: "AiVrwDhGgNI", title: "Legends of the Hidden Temple", start: 60 },
+                { id: "ye8KvYKn9-0", title: "Boy Meets World", start: 30 },
+                { id: "aBW5dfHOmTI", title: "The Magic School Bus", start: 0 },
+            ],
+            computer: [
+                { id: "miZHa7ZC6Z0", title: "Windows 95 Startup", start: 0 },
+                { id: "D1UY7eDRXrs", title: "AOL Dial-Up Sound", start: 0 },
+                { id: "gsNaR6FRuO0", title: "Oregon Trail Gameplay", start: 30 },
+                { id: "oGB-yMRhRMg", title: "Windows 98 Tour", start: 0 },
+                { id: "8LQftYK2n8o", title: "3D Pinball Space Cadet", start: 0 },
+                { id: "N_GP0gZbJMk", title: "90s Screensavers", start: 0 },
+            ],
+            radio: [
+                { id: "6M6samPEMpM", title: "No Diggity - Blackstreet", start: 20 },
+                { id: "4m48GqaOz90", title: "I Want It That Way - BSB", start: 0 },
+                { id: "Eo-KmOd3i7s", title: "Smells Like Teen Spirit", start: 25 },
+                { id: "djV11Xbc914", title: "Mambo No. 5", start: 10 },
+                { id: "ZyhrYis509A", title: "Wannabe - Spice Girls", start: 15 },
+                { id: "FrLequ6dUdM", title: "Ice Ice Baby", start: 0 },
+                { id: "kffacxfA7G4", title: "Baby Got Back", start: 20 },
+                { id: "dQw4w9WgXcQ", title: "Never Gonna Give You Up", start: 0 },
+            ],
+            phone: [
+                { src: "https://www.soundjay.com/telephone/sounds/telephone-ring-01a.mp3", title: "Phone Ringing" },
+                { src: "https://www.soundjay.com/telephone/sounds/dial-tone-1.mp3", title: "Dial Tone" },
+                { src: "https://www.soundjay.com/telephone/sounds/busy-signal-1.mp3", title: "Busy Signal" },
+            ]
+        };
+
+        let activeDevice = null;
+        let currentIndex = 0;
+        let isMuted = true;
+        let tvPlayer = null;
+        let computerPlayer = null;
+
+        // Load YouTube API
+        var tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        document.head.appendChild(tag);
+
+        function onYouTubeIframeAPIReady() {
+            tvPlayer = new YT.Player('tv-player', {
+                height: '100%',
+                width: '100%',
+                playerVars: {
+                    autoplay: 0,
+                    mute: 1,
+                    controls: 0,
+                    showinfo: 0,
+                    rel: 0,
+                    modestbranding: 1,
+                    iv_load_policy: 3,
+                    disablekb: 1,
+                    fs: 0,
+                    playsinline: 1
+                },
+                events: {
+                    onStateChange: onPlayerStateChange
+                }
+            });
+
+            computerPlayer = new YT.Player('computer-player', {
+                height: '100%',
+                width: '100%',
+                playerVars: {
+                    autoplay: 0,
+                    mute: 1,
+                    controls: 0,
+                    showinfo: 0,
+                    rel: 0,
+                    modestbranding: 1,
+                    iv_load_policy: 3,
+                    disablekb: 1,
+                    fs: 0,
+                    playsinline: 1
+                },
+                events: {
+                    onStateChange: onPlayerStateChange
+                }
+            });
+        }
+
+        function onPlayerStateChange(event) {
+            if (event.data === YT.PlayerState.ENDED) {
+                nextChannel();
+            }
+        }
+
+        function activateDevice(device) {
+            // Hide instructions
+            document.getElementById('instructions').classList.add('hidden');
+
+            // Deactivate previous
+            if (activeDevice) {
+                closeDevice();
+            }
+
+            activeDevice = device;
+            currentIndex = 0;
+            isMuted = true;
+
+            // Highlight hotspot
+            document.querySelectorAll('.hotspot').forEach(h => h.classList.remove('active'));
+            document.querySelector('.hotspot-' + device).classList.add('active');
+
+            // Show control panel
+            document.getElementById('control-panel').classList.remove('hidden');
+            document.getElementById('mute-btn').textContent = 'UNMUTE';
+
+            if (device === 'tv') {
+                document.getElementById('tv-screen').classList.add('visible');
+                document.getElementById('panel-device').textContent = '📺 TV';
+                loadContent();
+            } else if (device === 'computer') {
+                document.getElementById('computer-screen').classList.add('visible');
+                document.getElementById('panel-device').textContent = '💻 COMPUTER';
+                loadContent();
+            } else if (device === 'radio') {
+                document.getElementById('panel-device').textContent = '📻 RADIO';
+                document.getElementById('audio-visualizer').classList.add('visible');
+                loadContent();
+            } else if (device === 'phone') {
+                document.getElementById('panel-device').textContent = '📞 PHONE';
+                loadContent();
+            }
+        }
+
+        function loadContent() {
+            const items = content[activeDevice];
+            const item = items[currentIndex];
+
+            document.getElementById('panel-title').textContent = item.title;
+
+            if (activeDevice === 'tv') {
+                tvPlayer.loadVideoById({ videoId: item.id, startSeconds: item.start || 0 });
+                if (isMuted) tvPlayer.mute(); else tvPlayer.unMute();
+            } else if (activeDevice === 'computer') {
+                computerPlayer.loadVideoById({ videoId: item.id, startSeconds: item.start || 0 });
+                if (isMuted) computerPlayer.mute(); else computerPlayer.unMute();
+            } else if (activeDevice === 'radio') {
+                // For radio, we use YouTube for music videos
+                if (!document.getElementById('radio-player')) {
+                    const radioScreen = document.createElement('div');
+                    radioScreen.id = 'radio-player-container';
+                    radioScreen.style.cssText = 'position:fixed;left:-9999px;';
+                    radioScreen.innerHTML = '<div id="radio-player"></div>';
+                    document.body.appendChild(radioScreen);
+                    
+                    // Create radio player after container exists
+                    setTimeout(() => {
+                        window.radioPlayer = new YT.Player('radio-player', {
+                            height: '1',
+                            width: '1',
+                            videoId: item.id,
+                            playerVars: { autoplay: 1, mute: isMuted ? 1 : 0, start: item.start || 0 },
+                            events: { onStateChange: onPlayerStateChange }
+                        });
+                    }, 100);
+                } else if (window.radioPlayer && window.radioPlayer.loadVideoById) {
+                    window.radioPlayer.loadVideoById({ videoId: item.id, startSeconds: item.start || 0 });
+                    if (isMuted) window.radioPlayer.mute(); else window.radioPlayer.unMute();
+                }
+            } else if (activeDevice === 'phone') {
+                const audio = document.getElementById('phone-audio');
+                audio.src = item.src;
+                audio.loop = true;
+                if (!isMuted) audio.play();
+            }
+        }
+
+        function nextChannel() {
+            const items = content[activeDevice];
+            currentIndex = (currentIndex + 1) % items.length;
+            loadContent();
+        }
+
+        function prevChannel() {
+            const items = content[activeDevice];
+            currentIndex = (currentIndex - 1 + items.length) % items.length;
+            loadContent();
+        }
+
+        function toggleMute() {
+            isMuted = !isMuted;
+            document.getElementById('mute-btn').textContent = isMuted ? 'UNMUTE' : 'MUTE';
+
+            if (activeDevice === 'tv') {
+                if (isMuted) tvPlayer.mute(); else tvPlayer.unMute();
+            } else if (activeDevice === 'computer') {
+                if (isMuted) computerPlayer.mute(); else computerPlayer.unMute();
+            } else if (activeDevice === 'radio' && window.radioPlayer) {
+                if (isMuted) window.radioPlayer.mute(); else window.radioPlayer.unMute();
+            } else if (activeDevice === 'phone') {
+                const audio = document.getElementById('phone-audio');
+                if (isMuted) {
+                    audio.pause();
+                } else {
+                    audio.play();
+                }
+            }
+        }
+
+        function closeDevice() {
+            // Stop all playback
+            if (tvPlayer && tvPlayer.pauseVideo) tvPlayer.pauseVideo();
+            if (computerPlayer && computerPlayer.pauseVideo) computerPlayer.pauseVideo();
+            if (window.radioPlayer && window.radioPlayer.pauseVideo) window.radioPlayer.pauseVideo();
+            document.getElementById('phone-audio').pause();
+
+            // Hide screens
+            document.getElementById('tv-screen').classList.remove('visible');
+            document.getElementById('computer-screen').classList.remove('visible');
+            document.getElementById('audio-visualizer').classList.remove('visible');
+
+            // Remove active states
+            document.querySelectorAll('.hotspot').forEach(h => h.classList.remove('active'));
+            document.getElementById('control-panel').classList.add('hidden');
+
+            activeDevice = null;
+        }
+
+        // Click outside to close
+        document.querySelector('.room-image').addEventListener('click', function(e) {
+            if (activeDevice && !e.target.closest('.hotspot') && !e.target.closest('.control-panel')) {
+                closeDevice();
+            }
+        });
+    </script>
+</body>
+</html>
