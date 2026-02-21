@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotspot Editor — 90s Living Room</title>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #1a1a1a;
+            color: #fff;
+            min-height: 100vh;
+        }
+
+        .toolbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #2a2a2a;
+            border-bottom: 2px solid #00ff00;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            z-index: 1000;
+        }
+
+        .toolbar h1 {
+            font-family: 'VT323', monospace;
+            font-size: 24px;
+            color: #00ff00;
+        }
+
+        .toolbar-btn {
+            background: #333;
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            padding: 8px 16px;
+            font-family: 'VT323', monospace;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .toolbar-btn:hover {
+            background: #00ff00;
+            color: #000;
+        }
+
+        .toolbar-btn.active {
+            background: #00ff00;
+            color: #000;
+        }
+
+        .instructions {
+            font-size: 13px;
+            color: #888;
+            margin-left: auto;
+        }
+
+        .editor-container {
+            margin-top: 60px;
+            padding: 20px;
+            display: flex;
+            gap: 20px;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            flex: 1;
+            background: #000;
+            border: 2px solid #333;
+        }
+
+        .canvas-wrapper img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .hotspot {
+            position: absolute;
+            border: 3px dashed #00ff00;
+            background: rgba(0, 255, 0, 0.15);
+            cursor: move;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'VT323', monospace;
+            font-size: 18px;
+            color: #00ff00;
+            text-shadow: 0 0 5px #000;
+            user-select: none;
+        }
+
+        .hotspot.selected {
+            border-color: #ffff00;
+            background: rgba(255, 255, 0, 0.2);
+            box-shadow: 0 0 20px rgba(255, 255, 0, 0.5);
+        }
+
+        .hotspot:hover {
+            border-color: #ffff00;
+        }
+
+        .resize-handle {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            background: #00ff00;
+            border: 2px solid #000;
+        }
+
+        .resize-handle.se {
+            bottom: -7px;
+            right: -7px;
+            cursor: se-resize;
+        }
+
+        .resize-handle.sw {
+            bottom: -7px;
+            left: -7px;
+            cursor: sw-resize;
+        }
+
+        .resize-handle.ne {
+            top: -7px;
+            right: -7px;
+            cursor: ne-resize;
+        }
+
+        .resize-handle.nw {
+            top: -7px;
+            left: -7px;
+            cursor: nw-resize;
+        }
+
+        .sidebar {
+            width: 320px;
+            background: #2a2a2a;
+            border: 2px solid #333;
+            padding: 15px;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+        }
+
+        .sidebar h2 {
+            font-family: 'VT323', monospace;
+            font-size: 20px;
+            color: #00ff00;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #444;
+        }
+
+        .hotspot-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .hotspot-item {
+            background: #333;
+            border: 2px solid #444;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .hotspot-item:hover, .hotspot-item.selected {
+            border-color: #00ff00;
+            background: #3a3a3a;
+        }
+
+        .hotspot-item-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .hotspot-item-name {
+            font-family: 'VT323', monospace;
+            font-size: 18px;
+            color: #00ff00;
+        }
+
+        .hotspot-item-values {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .value-group {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .value-group label {
+            color: #666;
+            font-size: 10px;
+            text-transform: uppercase;
+        }
+
+        .value-group input {
+            background: #222;
+            border: 1px solid #444;
+            color: #fff;
+            padding: 4px 6px;
+            font-size: 12px;
+            font-family: 'VT323', monospace;
+            width: 100%;
+        }
+
+        .value-group input:focus {
+            outline: none;
+            border-color: #00ff00;
+        }
+
+        .output-section {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #444;
+        }
+
+        .output-section h3 {
+            font-family: 'VT323', monospace;
+            font-size: 16px;
+            color: #ffff00;
+            margin-bottom: 10px;
+        }
+
+        .css-output {
+            background: #111;
+            border: 1px solid #333;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 11px;
+            color: #0f0;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .copy-btn {
+            width: 100%;
+            margin-top: 10px;
+            background: #00ff00;
+            border: none;
+            color: #000;
+            padding: 10px;
+            font-family: 'VT323', monospace;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: #00cc00;
+        }
+
+        .copy-btn.copied {
+            background: #ffff00;
+        }
+    </style>
+</head>
+<body>
+    <div class="toolbar">
+        <h1>📺 HOTSPOT EDITOR</h1>
+        <button class="toolbar-btn" onclick="resetPositions()">RESET</button>
+        <button class="toolbar-btn" onclick="applyAndSave()">APPLY & SAVE CSS</button>
+        <span class="instructions">Drag to move • Drag corners to resize • Click to select</span>
+    </div>
+
+    <div class="editor-container">
+        <div class="canvas-wrapper" id="canvas">
+            <img src="https://i.imgur.com/t0lxkct.jpeg" alt="90s Living Room" id="room-image">
+            
+            <div class="hotspot" id="hotspot-tv" data-name="tv">
+                📺 TV
+                <div class="resize-handle nw" data-corner="nw"></div>
+                <div class="resize-handle ne" data-corner="ne"></div>
+                <div class="resize-handle sw" data-corner="sw"></div>
+                <div class="resize-handle se" data-corner="se"></div>
+            </div>
+
+            <div class="hotspot" id="hotspot-computer" data-name="computer">
+                💻 Computer
+                <div class="resize-handle nw" data-corner="nw"></div>
+                <div class="resize-handle ne" data-corner="ne"></div>
+                <div class="resize-handle sw" data-corner="sw"></div>
+                <div class="resize-handle se" data-corner="se"></div>
+            </div>
+
+            <div class="hotspot" id="hotspot-radio" data-name="radio">
+                📻 Radio
+                <div class="resize-handle nw" data-corner="nw"></div>
+                <div class="resize-handle ne" data-corner="ne"></div>
+                <div class="resize-handle sw" data-corner="sw"></div>
+                <div class="resize-handle se" data-corner="se"></div>
+            </div>
+
+            <div class="hotspot" id="hotspot-phone" data-name="phone">
+                📞 Phone
+                <div class="resize-handle nw" data-corner="nw"></div>
+                <div class="resize-handle ne" data-corner="ne"></div>
+                <div class="resize-handle sw" data-corner="sw"></div>
+                <div class="resize-handle se" data-corner="se"></div>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <h2>HOTSPOTS</h2>
+            <div class="hotspot-list" id="hotspot-list"></div>
+
+            <div class="output-section">
+                <h3>📋 CSS OUTPUT</h3>
+                <div class="css-output" id="css-output"></div>
+                <button class="copy-btn" onclick="copyCSS()">COPY CSS</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const hotspots = {
+            tv: { left: 33, top: 25, width: 18, height: 35 },
+            computer: { left: 59, top: 22, width: 16, height: 40 },
+            radio: { left: 15, top: 33, width: 10, height: 12 },
+            phone: { left: 86, top: 25, width: 5, height: 18 }
+        };
+
+        const labels = {
+            tv: '📺 TV',
+            computer: '💻 Computer',
+            radio: '📻 Radio',
+            phone: '📞 Phone'
+        };
+
+        let selectedHotspot = null;
+        let isDragging = false;
+        let isResizing = false;
+        let resizeCorner = null;
+        let startX, startY, startLeft, startTop, startWidth, startHeight;
+
+        function init() {
+            // Load saved positions if any
+            const saved = localStorage.getItem('hotspotPositions');
+            if (saved) {
+                Object.assign(hotspots, JSON.parse(saved));
+            }
+
+            // Apply initial positions
+            Object.keys(hotspots).forEach(name => {
+                updateHotspotElement(name);
+            });
+
+            // Build sidebar list
+            buildSidebarList();
+            updateCSSOutput();
+
+            // Event listeners
+            document.querySelectorAll('.hotspot').forEach(el => {
+                el.addEventListener('mousedown', onHotspotMouseDown);
+            });
+
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        }
+
+        function buildSidebarList() {
+            const list = document.getElementById('hotspot-list');
+            list.innerHTML = '';
+
+            Object.keys(hotspots).forEach(name => {
+                const h = hotspots[name];
+                const item = document.createElement('div');
+                item.className = 'hotspot-item';
+                item.dataset.name = name;
+                item.innerHTML = `
+                    <div class="hotspot-item-header">
+                        <span class="hotspot-item-name">${labels[name]}</span>
+                    </div>
+                    <div class="hotspot-item-values">
+                        <div class="value-group">
+                            <label>Left %</label>
+                            <input type="number" step="0.5" value="${h.left}" data-prop="left">
+                        </div>
+                        <div class="value-group">
+                            <label>Top %</label>
+                            <input type="number" step="0.5" value="${h.top}" data-prop="top">
+                        </div>
+                        <div class="value-group">
+                            <label>Width %</label>
+                            <input type="number" step="0.5" value="${h.width}" data-prop="width">
+                        </div>
+                        <div class="value-group">
+                            <label>Height %</label>
+                            <input type="number" step="0.5" value="${h.height}" data-prop="height">
+                        </div>
+                    </div>
+                `;
+
+                item.addEventListener('click', () => selectHotspot(name));
+
+                item.querySelectorAll('input').forEach(input => {
+                    input.addEventListener('input', (e) => {
+                        e.stopPropagation();
+                        hotspots[name][input.dataset.prop] = parseFloat(input.value) || 0;
+                        updateHotspotElement(name);
+                        updateCSSOutput();
+                        savePositions();
+                    });
+                    input.addEventListener('click', e => e.stopPropagation());
+                });
+
+                list.appendChild(item);
+            });
+        }
+
+        function selectHotspot(name) {
+            selectedHotspot = name;
+            
+            document.querySelectorAll('.hotspot').forEach(el => el.classList.remove('selected'));
+            document.querySelectorAll('.hotspot-item').forEach(el => el.classList.remove('selected'));
+
+            document.getElementById('hotspot-' + name).classList.add('selected');
+            document.querySelector(`.hotspot-item[data-name="${name}"]`).classList.add('selected');
+        }
+
+        function updateHotspotElement(name) {
+            const el = document.getElementById('hotspot-' + name);
+            const h = hotspots[name];
+            el.style.left = h.left + '%';
+            el.style.top = h.top + '%';
+            el.style.width = h.width + '%';
+            el.style.height = h.height + '%';
+        }
+
+        function onHotspotMouseDown(e) {
+            const el = e.currentTarget;
+            const name = el.dataset.name;
+            selectHotspot(name);
+
+            const canvas = document.getElementById('canvas');
+            const rect = canvas.getBoundingClientRect();
+
+            startX = e.clientX;
+            startY = e.clientY;
+            startLeft = hotspots[name].left;
+            startTop = hotspots[name].top;
+            startWidth = hotspots[name].width;
+            startHeight = hotspots[name].height;
+
+            if (e.target.classList.contains('resize-handle')) {
+                isResizing = true;
+                resizeCorner = e.target.dataset.corner;
+            } else {
+                isDragging = true;
+            }
+
+            e.preventDefault();
+        }
+
+        function onMouseMove(e) {
+            if (!isDragging && !isResizing) return;
+
+            const canvas = document.getElementById('canvas');
+            const rect = canvas.getBoundingClientRect();
+            
+            const deltaX = ((e.clientX - startX) / rect.width) * 100;
+            const deltaY = ((e.clientY - startY) / rect.height) * 100;
+
+            const name = selectedHotspot;
+            const h = hotspots[name];
+
+            if (isDragging) {
+                h.left = Math.max(0, Math.min(100 - h.width, startLeft + deltaX));
+                h.top = Math.max(0, Math.min(100 - h.height, startTop + deltaY));
+            } else if (isResizing) {
+                if (resizeCorner.includes('e')) {
+                    h.width = Math.max(2, startWidth + deltaX);
+                }
+                if (resizeCorner.includes('w')) {
+                    const newWidth = Math.max(2, startWidth - deltaX);
+                    h.left = startLeft + (startWidth - newWidth);
+                    h.width = newWidth;
+                }
+                if (resizeCorner.includes('s')) {
+                    h.height = Math.max(2, startHeight + deltaY);
+                }
+                if (resizeCorner.includes('n')) {
+                    const newHeight = Math.max(2, startHeight - deltaY);
+                    h.top = startTop + (startHeight - newHeight);
+                    h.height = newHeight;
+                }
+            }
+
+            // Round to 1 decimal
+            h.left = Math.round(h.left * 10) / 10;
+            h.top = Math.round(h.top * 10) / 10;
+            h.width = Math.round(h.width * 10) / 10;
+            h.height = Math.round(h.height * 10) / 10;
+
+            updateHotspotElement(name);
+            updateSidebarInputs(name);
+            updateCSSOutput();
+        }
+
+        function onMouseUp() {
+            if (isDragging || isResizing) {
+                savePositions();
+            }
+            isDragging = false;
+            isResizing = false;
+            resizeCorner = null;
+        }
+
+        function updateSidebarInputs(name) {
+            const item = document.querySelector(`.hotspot-item[data-name="${name}"]`);
+            const h = hotspots[name];
+            item.querySelector('[data-prop="left"]').value = h.left;
+            item.querySelector('[data-prop="top"]').value = h.top;
+            item.querySelector('[data-prop="width"]').value = h.width;
+            item.querySelector('[data-prop="height"]').value = h.height;
+        }
+
+        function updateCSSOutput() {
+            let css = '';
+            Object.keys(hotspots).forEach(name => {
+                const h = hotspots[name];
+                css += `.hotspot-${name} {\n`;
+                css += `    left: ${h.left}%;\n`;
+                css += `    top: ${h.top}%;\n`;
+                css += `    width: ${h.width}%;\n`;
+                css += `    height: ${h.height}%;\n`;
+                css += `}\n\n`;
+            });
+            document.getElementById('css-output').textContent = css;
+        }
+
+        function copyCSS() {
+            const css = document.getElementById('css-output').textContent;
+            navigator.clipboard.writeText(css).then(() => {
+                const btn = document.querySelector('.copy-btn');
+                btn.textContent = 'COPIED!';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = 'COPY CSS';
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
+        function savePositions() {
+            localStorage.setItem('hotspotPositions', JSON.stringify(hotspots));
+        }
+
+        function resetPositions() {
+            if (confirm('Reset all hotspots to default positions?')) {
+                hotspots.tv = { left: 33, top: 25, width: 18, height: 35 };
+                hotspots.computer = { left: 59, top: 22, width: 16, height: 40 };
+                hotspots.radio = { left: 15, top: 33, width: 10, height: 12 };
+                hotspots.phone = { left: 86, top: 25, width: 5, height: 18 };
+                
+                Object.keys(hotspots).forEach(name => {
+                    updateHotspotElement(name);
+                    updateSidebarInputs(name);
+                });
+                updateCSSOutput();
+                savePositions();
+            }
+        }
+
+        function applyAndSave() {
+            const css = document.getElementById('css-output').textContent;
+            copyCSS();
+            alert('CSS copied to clipboard!\n\nPaste these values into the main index.html file to update the hotspot positions.');
+        }
+
+        init();
+    </script>
+</body>
+</html>
