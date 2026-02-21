@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resource Manager — 90s Living Room</title>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #111;
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #00ff00;
+        }
+
+        h1 {
+            font-family: 'VT323', monospace;
+            font-size: 32px;
+            color: #00ff00;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            background: #222;
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            padding: 10px 20px;
+            font-family: 'VT323', monospace;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: #00ff00;
+            color: #000;
+        }
+
+        .btn-danger {
+            border-color: #ff4444;
+            color: #ff4444;
+        }
+
+        .btn-danger:hover {
+            background: #ff4444;
+            color: #fff;
+        }
+
+        .categories {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        @media (max-width: 900px) {
+            .categories {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .category {
+            background: #1a1a1a;
+            border: 2px solid #333;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .category-header {
+            background: #222;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid #333;
+        }
+
+        .category-title {
+            font-family: 'VT323', monospace;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .category-title.tv { color: #00ff00; }
+        .category-title.computer { color: #00aaff; }
+        .category-title.radio { color: #ffaa00; }
+        .category-title.phone { color: #ff66aa; }
+
+        .category-count {
+            font-family: 'VT323', monospace;
+            font-size: 16px;
+            color: #666;
+        }
+
+        .category-content {
+            padding: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .add-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .add-form input {
+            flex: 1;
+            background: #111;
+            border: 2px solid #333;
+            color: #fff;
+            padding: 10px 15px;
+            font-size: 14px;
+            border-radius: 4px;
+        }
+
+        .add-form input:focus {
+            outline: none;
+            border-color: #00ff00;
+        }
+
+        .add-form input::placeholder {
+            color: #555;
+        }
+
+        .add-btn {
+            background: #00ff00;
+            border: none;
+            color: #000;
+            padding: 10px 20px;
+            font-family: 'VT323', monospace;
+            font-size: 18px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .add-btn:hover {
+            background: #00cc00;
+        }
+
+        .items-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .item {
+            background: #222;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 12px 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .item-drag {
+            color: #444;
+            cursor: grab;
+            font-size: 18px;
+        }
+
+        .item-drag:active {
+            cursor: grabbing;
+        }
+
+        .item-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .item-title {
+            font-weight: 500;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .item-meta {
+            font-size: 12px;
+            color: #666;
+            font-family: monospace;
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .item-btn {
+            background: transparent;
+            border: 1px solid #444;
+            color: #888;
+            width: 32px;
+            height: 32px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .item-btn:hover {
+            border-color: #fff;
+            color: #fff;
+        }
+
+        .item-btn.delete:hover {
+            border-color: #ff4444;
+            color: #ff4444;
+            background: rgba(255, 68, 68, 0.1);
+        }
+
+        .item-btn.edit:hover {
+            border-color: #00aaff;
+            color: #00aaff;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: #555;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+            opacity: 0.3;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s;
+        }
+
+        .modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: #1a1a1a;
+            border: 2px solid #00ff00;
+            border-radius: 8px;
+            padding: 25px;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        .modal h2 {
+            font-family: 'VT323', monospace;
+            font-size: 24px;
+            color: #00ff00;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .form-group input {
+            width: 100%;
+            background: #111;
+            border: 2px solid #333;
+            color: #fff;
+            padding: 12px 15px;
+            font-size: 14px;
+            border-radius: 4px;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #00ff00;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .help-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #00ff00;
+            color: #000;
+            padding: 15px 25px;
+            border-radius: 6px;
+            font-family: 'VT323', monospace;
+            font-size: 18px;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s;
+        }
+
+        .toast.visible {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .instructions {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .instructions h3 {
+            font-family: 'VT323', monospace;
+            color: #ffff00;
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        .instructions ul {
+            margin-left: 20px;
+            color: #888;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .instructions code {
+            background: #333;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+            color: #00ff00;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📼 RESOURCE MANAGER</h1>
+        <div class="header-actions">
+            <button class="btn" onclick="exportData()">📤 Export</button>
+            <button class="btn" onclick="document.getElementById('importFile').click()">📥 Import</button>
+            <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+            <button class="btn" onclick="window.location.href='index.html'">▶ Launch</button>
+        </div>
+    </div>
+
+    <div class="instructions">
+        <h3>📝 How to add content:</h3>
+        <ul>
+            <li><strong>TV & Computer:</strong> Paste a YouTube URL or video ID (e.g., <code>dQw4w9WgXcQ</code> or <code>https://youtube.com/watch?v=dQw4w9WgXcQ</code>)</li>
+            <li><strong>Radio:</strong> YouTube music videos work great — paste the URL or ID</li>
+            <li><strong>Phone:</strong> Paste a direct link to an MP3/audio file</li>
+            <li>Optional: Set a <strong>start time</strong> in seconds to skip intros</li>
+        </ul>
+    </div>
+
+    <div class="categories">
+        <!-- TV -->
+        <div class="category">
+            <div class="category-header">
+                <span class="category-title tv">📺 TV</span>
+                <span class="category-count" id="tv-count">0 clips</span>
+            </div>
+            <div class="category-content">
+                <div class="add-form">
+                    <input type="text" id="tv-input" placeholder="YouTube URL or video ID...">
+                    <button class="add-btn" onclick="addItem('tv')">+ ADD</button>
+                </div>
+                <div class="items-list" id="tv-list"></div>
+            </div>
+        </div>
+
+        <!-- Computer -->
+        <div class="category">
+            <div class="category-header">
+                <span class="category-title computer">💻 Computer</span>
+                <span class="category-count" id="computer-count">0 clips</span>
+            </div>
+            <div class="category-content">
+                <div class="add-form">
+                    <input type="text" id="computer-input" placeholder="YouTube URL or video ID...">
+                    <button class="add-btn" onclick="addItem('computer')">+ ADD</button>
+                </div>
+                <div class="items-list" id="computer-list"></div>
+            </div>
+        </div>
+
+        <!-- Radio -->
+        <div class="category">
+            <div class="category-header">
+                <span class="category-title radio">📻 Radio</span>
+                <span class="category-count" id="radio-count">0 songs</span>
+            </div>
+            <div class="category-content">
+                <div class="add-form">
+                    <input type="text" id="radio-input" placeholder="YouTube URL or video ID...">
+                    <button class="add-btn" onclick="addItem('radio')">+ ADD</button>
+                </div>
+                <div class="items-list" id="radio-list"></div>
+            </div>
+        </div>
+
+        <!-- Phone -->
+        <div class="category">
+            <div class="category-header">
+                <span class="category-title phone">📞 Phone</span>
+                <span class="category-count" id="phone-count">0 sounds</span>
+            </div>
+            <div class="category-content">
+                <div class="add-form">
+                    <input type="text" id="phone-input" placeholder="Audio URL (MP3)...">
+                    <button class="add-btn" onclick="addItem('phone')">+ ADD</button>
+                </div>
+                <div class="items-list" id="phone-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal">
+            <h2>✏️ Edit Item</h2>
+            <div class="form-group">
+                <label>Title</label>
+                <input type="text" id="edit-title" placeholder="Display name...">
+            </div>
+            <div class="form-group">
+                <label>Source (YouTube ID or Audio URL)</label>
+                <input type="text" id="edit-source" placeholder="Video ID or URL...">
+            </div>
+            <div class="form-group">
+                <label>Start Time (seconds)</label>
+                <input type="number" id="edit-start" placeholder="0" min="0">
+                <div class="help-text">Skip to this point in the video</div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn" onclick="closeEditModal()">Cancel</button>
+                <button class="btn" onclick="saveEdit()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // Default content
+        const defaultContent = {
+            tv: [
+                { id: "TijcoS8qHIE", title: "House Hippo PSA", start: 0 },
+                { id: "KmtzQCSh6xk", title: "Saved by the Bell", start: 60 },
+                { id: "i1NKoMNy5bY", title: "Fresh Prince of Bel-Air", start: 0 },
+                { id: "NNUdPa3yfXs", title: "90s Commercials Compilation", start: 0 },
+                { id: "LatorN4P9aA", title: "Are You Afraid of the Dark?", start: 120 },
+                { id: "AiVrwDhGgNI", title: "Legends of the Hidden Temple", start: 60 },
+                { id: "ye8KvYKn9-0", title: "Boy Meets World", start: 30 },
+                { id: "aBW5dfHOmTI", title: "The Magic School Bus", start: 0 },
+            ],
+            computer: [
+                { id: "miZHa7ZC6Z0", title: "Windows 95 Startup", start: 0 },
+                { id: "D1UY7eDRXrs", title: "AOL Dial-Up Sound", start: 0 },
+                { id: "gsNaR6FRuO0", title: "Oregon Trail Gameplay", start: 30 },
+                { id: "oGB-yMRhRMg", title: "Windows 98 Tour", start: 0 },
+                { id: "8LQftYK2n8o", title: "3D Pinball Space Cadet", start: 0 },
+                { id: "N_GP0gZbJMk", title: "90s Screensavers", start: 0 },
+            ],
+            radio: [
+                { id: "6M6samPEMpM", title: "No Diggity - Blackstreet", start: 20 },
+                { id: "4m48GqaOz90", title: "I Want It That Way - BSB", start: 0 },
+                { id: "Eo-KmOd3i7s", title: "Smells Like Teen Spirit", start: 25 },
+                { id: "djV11Xbc914", title: "Mambo No. 5", start: 10 },
+                { id: "ZyhrYis509A", title: "Wannabe - Spice Girls", start: 15 },
+                { id: "FrLequ6dUdM", title: "Ice Ice Baby", start: 0 },
+                { id: "kffacxfA7G4", title: "Baby Got Back", start: 20 },
+                { id: "dQw4w9WgXcQ", title: "Never Gonna Give You Up", start: 0 },
+            ],
+            phone: [
+                { src: "https://www.soundjay.com/telephone/sounds/telephone-ring-01a.mp3", title: "Phone Ringing" },
+                { src: "https://www.soundjay.com/telephone/sounds/dial-tone-1.mp3", title: "Dial Tone" },
+                { src: "https://www.soundjay.com/telephone/sounds/busy-signal-1.mp3", title: "Busy Signal" },
+            ]
+        };
+
+        let content = {};
+        let editingItem = null;
+        let editingCategory = null;
+
+        function init() {
+            // Load from localStorage or use defaults
+            const saved = localStorage.getItem('90sRoomContent');
+            if (saved) {
+                content = JSON.parse(saved);
+            } else {
+                content = JSON.parse(JSON.stringify(defaultContent));
+                saveContent();
+            }
+
+            renderAllLists();
+
+            // Enter key to add
+            ['tv', 'computer', 'radio', 'phone'].forEach(cat => {
+                document.getElementById(`${cat}-input`).addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') addItem(cat);
+                });
+            });
+        }
+
+        function saveContent() {
+            localStorage.setItem('90sRoomContent', JSON.stringify(content));
+        }
+
+        function renderAllLists() {
+            ['tv', 'computer', 'radio', 'phone'].forEach(renderList);
+        }
+
+        function renderList(category) {
+            const list = document.getElementById(`${category}-list`);
+            const items = content[category] || [];
+            const countEl = document.getElementById(`${category}-count`);
+
+            const unit = category === 'radio' ? 'songs' : category === 'phone' ? 'sounds' : 'clips';
+            countEl.textContent = `${items.length} ${unit}`;
+
+            if (items.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">${category === 'tv' ? '📺' : category === 'computer' ? '💻' : category === 'radio' ? '📻' : '📞'}</div>
+                        <div>No content yet. Add some above!</div>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = items.map((item, index) => `
+                <div class="item" data-index="${index}">
+                    <span class="item-drag">⋮⋮</span>
+                    <div class="item-info">
+                        <div class="item-title">${item.title}</div>
+                        <div class="item-meta">${item.id || item.src}${item.start ? ` • Start: ${item.start}s` : ''}</div>
+                    </div>
+                    <div class="item-actions">
+                        <button class="item-btn edit" onclick="editItem('${category}', ${index})" title="Edit">✏️</button>
+                        <button class="item-btn delete" onclick="deleteItem('${category}', ${index})" title="Delete">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function extractYouTubeId(input) {
+            // Already an ID (11 chars, alphanumeric + dash/underscore)
+            if (/^[a-zA-Z0-9_-]{11}$/.test(input)) {
+                return input;
+            }
+
+            // Full URL patterns
+            const patterns = [
+                /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+                /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/
+            ];
+
+            for (const pattern of patterns) {
+                const match = input.match(pattern);
+                if (match) return match[1];
+            }
+
+            return null;
+        }
+
+        function addItem(category) {
+            const input = document.getElementById(`${category}-input`);
+            const value = input.value.trim();
+
+            if (!value) return;
+
+            let newItem;
+
+            if (category === 'phone') {
+                // Phone uses audio URLs
+                newItem = {
+                    src: value,
+                    title: value.split('/').pop().replace(/\.[^.]+$/, '') || 'Audio Clip'
+                };
+            } else {
+                // TV, Computer, Radio use YouTube
+                const videoId = extractYouTubeId(value);
+                if (!videoId) {
+                    showToast('Invalid YouTube URL or ID');
+                    return;
+                }
+                newItem = {
+                    id: videoId,
+                    title: `Video ${videoId.substring(0, 6)}...`,
+                    start: 0
+                };
+
+                // Try to fetch title (won't work without API, but we try)
+                fetchVideoTitle(videoId).then(title => {
+                    if (title) {
+                        const items = content[category];
+                        const item = items.find(i => i.id === videoId);
+                        if (item) {
+                            item.title = title;
+                            saveContent();
+                            renderList(category);
+                        }
+                    }
+                });
+            }
+
+            content[category].push(newItem);
+            saveContent();
+            renderList(category);
+            input.value = '';
+            showToast('Added!');
+        }
+
+        async function fetchVideoTitle(videoId) {
+            try {
+                // Using noembed as a free API
+                const response = await fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${videoId}`);
+                const data = await response.json();
+                return data.title || null;
+            } catch {
+                return null;
+            }
+        }
+
+        function deleteItem(category, index) {
+            if (confirm('Delete this item?')) {
+                content[category].splice(index, 1);
+                saveContent();
+                renderList(category);
+                showToast('Deleted');
+            }
+        }
+
+        function editItem(category, index) {
+            editingCategory = category;
+            editingItem = index;
+            const item = content[category][index];
+
+            document.getElementById('edit-title').value = item.title || '';
+            document.getElementById('edit-source').value = item.id || item.src || '';
+            document.getElementById('edit-start').value = item.start || 0;
+
+            document.getElementById('editModal').classList.add('visible');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('visible');
+            editingItem = null;
+            editingCategory = null;
+        }
+
+        function saveEdit() {
+            const title = document.getElementById('edit-title').value.trim();
+            const source = document.getElementById('edit-source').value.trim();
+            const start = parseInt(document.getElementById('edit-start').value) || 0;
+
+            if (!title || !source) {
+                showToast('Title and source are required');
+                return;
+            }
+
+            const item = content[editingCategory][editingItem];
+            item.title = title;
+            item.start = start;
+
+            if (editingCategory === 'phone') {
+                item.src = source;
+            } else {
+                const videoId = extractYouTubeId(source);
+                if (!videoId) {
+                    showToast('Invalid YouTube URL or ID');
+                    return;
+                }
+                item.id = videoId;
+            }
+
+            saveContent();
+            renderList(editingCategory);
+            closeEditModal();
+            showToast('Saved!');
+        }
+
+        function exportData() {
+            const dataStr = JSON.stringify(content, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = '90s-room-content.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Exported!');
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (imported.tv && imported.computer && imported.radio && imported.phone) {
+                        content = imported;
+                        saveContent();
+                        renderAllLists();
+                        showToast('Imported!');
+                    } else {
+                        showToast('Invalid file format');
+                    }
+                } catch {
+                    showToast('Error reading file');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('visible');
+            setTimeout(() => toast.classList.remove('visible'), 2000);
+        }
+
+        // Close modal on overlay click
+        document.getElementById('editModal').addEventListener('click', (e) => {
+            if (e.target.id === 'editModal') closeEditModal();
+        });
+
+        init();
+    </script>
+</body>
+</html>
